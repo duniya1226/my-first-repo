@@ -1,0 +1,45 @@
+pipeline {
+    agent { label 'builtinubuntu' }
+    stages {
+        stage ('fetch code') {
+            steps{
+                git branch: 'main' , url: 'https://github.com/ajay-raut/spnodeserver.git'
+            }
+        }
+        stage ('build the code') {
+            steps{
+               
+                sh 'docker build -t my-node-app .'
+                
+               
+                sh 'docker run --name nodeserver -p 5000:5000 -d my-node-app:latest'
+                
+                
+                sh 'docker ps'
+                
+                
+                sh 'sleep 10'
+
+
+                sh 'docker stop nodeserver'
+
+
+                sh 'docker rm nodeserver'
+            }
+        }
+    }
+    
+     post {
+        // The 'failure' block only executes if the pipeline fails
+        failure {
+            echo "Build failed. Sending email notification..."
+            // Send an email with details about the failed build
+            mail to: 'ajayraut2500@gmail.com',
+                 subject: "Jenkins Build Failed: ${env.JOB_NAME}",
+                 body: "The build ${env.BUILD_DISPLAY_NAME} of ${env.JOB_NAME} failed. You can check the details here: ${env.BUILD_URL}"
+        }
+    }
+}
+
+
+
